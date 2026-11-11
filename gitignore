@@ -1,0 +1,13 @@
+# Virtual environment - never commit
+venv/
+.venv/
+
+# Secrets - never commit
+.env
+
+# Python / test caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.deepeval/
+.deepeval

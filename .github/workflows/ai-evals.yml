@@ -1,0 +1,73 @@
+name: AI Evals
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "30 20 * * *"      # every day 20:30 UTC = 02:00 IST
+  workflow_dispatch:            # "Run workflow" button in the Actions tab
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
+
+jobs:
+  # Level 1: fast rule-based checks on every push / PR
+  smoke:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Smoke tests (Level 1)
+        run: pytest -m smoke -v --junitxml=smoke-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-results
+          path: smoke-results.xml
+
+  # Level 2: LLM-as-judge (GEval), slower and costs more -> nightly or manual
+  nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Judge tests (Level 2)
+        run: pytest -m nightly -v --junitxml=nightly-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-results
+          path: nightly-results.xml
+
+  # Regression: everything, before a release (manual only)
+  regression:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Full suite
+        run: pytest -v --junitxml=full-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-results
+          path: full-results.xml
+
