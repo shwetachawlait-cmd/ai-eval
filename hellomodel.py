@@ -7,7 +7,7 @@ client = OpenAI()
 response = client.chat.completions.create(
     model=MODEL,
     messages=[
-        {"role": "user", "content": "Say Good Morning in one sentence with  a gree in polite way with question."},
+        {"role": "user", "content": "Say Good Morning in one sentence with  a greet in polite way with one question."},
     ],
 )
 

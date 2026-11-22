@@ -2,7 +2,10 @@ import pytest
 from agent import answer
 from golden import load_rows, split
 
+
+
 ROWS = load_rows()
+
 
 
 def make_case(row):
